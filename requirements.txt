@@ -1,0 +1,13 @@
+fastapi
+requests
+uvicorn
+psycopg2-binary
+sqlalchemy
+python-multipart
+aiofiles
+minio
+faster-whisper
+youtube-dl @ git+https://github.com/ytdl-org/youtube-dl.git@be008e657d79832642e2158557c899249c9e31cd
+gTTS
+pytest
+torch
