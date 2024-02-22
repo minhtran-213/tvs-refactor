@@ -1,58 +1,56 @@
 import requests
 from requests import HTTPError, Timeout
+import os
 
-def __read_text_from_srt_file(srt_path):
-        with open(srt_path, "r") as f:
-            content = f.readlines()
-        subtitles = []
-        subtitle_list = []
-        for line in content:
-            if line.strip().isdigit() and subtitle_list:
-                subtitles.append(__parse_subtitle_block(subtitle_list))
-                subtitle_list = []
-            subtitle_list.append(line.strip())
-        if subtitle_list:
-            subtitles.append(__parse_subtitle_block(subtitle_list))
-        return subtitles
+class TranslateSrtToLanguageException(Exception):
+    def __init__(self, message=None):
+        super().__init__(f"TranslateSrtToLanguageException - {message or 'Unknown error occurs'}")
 
-def __translate(subtitles, destination_language):
-    endpoint = "http://localhost:8000/translate"
-    
+# Main Translation Function
+def translate_srt_file(srt_path, destination_language, output_path):
+    subtitles = __read_text_from_srt_file(srt_path)
     for subtitle in subtitles:
-        param = {"q": subtitle.text, "source": "en", "target": destination_language, "format": "text"}
-        try:
-            response = requests.post(endpoint, params=param)
-            if response.status_code == 200:
-                json = response.json()
-                return json['translatedText']
-            else:
-                json_data = response.json()
-                print(f"TRANSLATING ERROR RESPONSE: {json_data}")
-        except HTTPError as e:
-            print(f"Http request to Libre Translating failed: {e}")
-            return
-        except Timeout as e:
-            print(f"Http request to Libre Translating timeout failed: {e}")
-            return
-        except ConnectionError as e:
-            print(f"Http request to Libre Translating connection failed: {e}")
-            return
-        except Exception as e:
-            print(f"Http request to Libre Translating failed: {e}")
-            return
-
+        translated_text = __translate_text(subtitle['text'], destination_language)
+        subtitle['text'] = translated_text
+    __write_text_to_srt(subtitles, output_path)
 
 def __parse_subtitle_block(block):
     number = block[0]
     time_code = block[1]
     text = ' '.join(block[2:])
-    return {
-        'number': number,
-        'time_code': time_code,
-        'text': text
-    }
+    return {'number': number, 'time_code': time_code, 'text': text}
 
-def translate_srt_into_language(srt_path: str, destination_language: str, output_destination: str):
-    print("Start translating")
-    subtitles = __read_text_from_srt_file(srt_path)
-    translate_result = __translate("")
+# Reading SRT File
+def __read_text_from_srt_file(srt_path):
+    subtitles = []
+    with open(srt_path, "r") as f:
+        content = f.readlines()
+    subtitle = []
+    for line in content:
+        if line.strip().isdigit() and subtitle:
+            subtitles.append(__parse_subtitle_block(subtitle))
+            subtitle = []
+        subtitle.append(line.strip())
+    if subtitle:
+        subtitles.append(__parse_subtitle_block(subtitle))
+    return subtitles
+
+# API Call to Translate
+def __translate_text(text, destination_language):
+    api = os.getenv('TRANSLATE_API_ENDPOINT_TRANSLATE')
+    param = {"q": text, "source": "en", "target": destination_language, "format": "text"}
+    try:
+        response = requests.post(api, params=param)
+        response.raise_for_status()  # Raises HTTPError for bad responses
+        return response.json().get('translatedText', '')
+    except (HTTPError, Timeout, ConnectionError) as e:
+        print(f"HTTP request failed: {e}")
+        raise TranslateSrtToLanguageException(str(e))
+
+# Writing to SRT
+def __write_text_to_srt(subtitles, output_path):
+    with open(output_path, "w", encoding='utf-8') as f:
+        for subtitle in subtitles:
+            f.write(f"{subtitle['number']}\n")
+            f.write(f"{subtitle['time_code']}\n")
+            f.write(f"{subtitle['text']}\n\n")
