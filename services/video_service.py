@@ -34,7 +34,9 @@ def __convert_video_information_to_entity(video_information: dict, video_file_st
 
 
 def processing_video(file_path: str, locale_code: str):
-    fastapi.process_srt(file_path)
+    transcribe_result = fastapi.process_srt(file_path)
+    origin_path = utils.get_dirname(transcribe_result['srt_en_path'])
+
 
 
 def __get_video_file_information_from_filepath(filepath: str):

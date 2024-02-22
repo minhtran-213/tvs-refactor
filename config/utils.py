@@ -10,6 +10,10 @@ def get_file_basename(path: str):
     }
 
 
+def get_dirname(path: str):
+    return os.path.dirname(path)
+
+
 def get_minio_filepath_without_bucket(path: str):
     filepath_components = path.split('/')[1:]
     return os.path.join(*filepath_components)

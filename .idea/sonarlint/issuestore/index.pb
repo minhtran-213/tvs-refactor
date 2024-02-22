@@ -45,3 +45,5 @@ R
 "integration/third_party/fastapi.py,6/b/6bcbc2a02ff58a583bef2d0cef24986a0393b476
 J
 resources/temp/test_en.srt,6/2/62ef4884e19a819288b9088d01a1315132c1df8e
+Y
+)integration/third_party/libretranslate.py,2/5/259e199ddc264bab49415a365a087dcdd28adb94
