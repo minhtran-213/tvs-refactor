@@ -11,7 +11,7 @@ minio_client = Minio(
 )
 
 BUCKET_NAME = "test"
-FILE_PATH = '/home/minhtranb/works/personal/tvs-refactor/resources/temp'
+FILE_PATH = '../../resources/temp'
 
 
 def get_object(object_name: str, user_id: str):
@@ -28,6 +28,17 @@ def get_object(object_name: str, user_id: str):
         print(f"Error occurred when getting object: {e}")
 
 
+def upload_file(object_name: str, file_path: str):
+    print(f"Saving to S3 Storage with filepath: {file_path}")
+    try:
+        minio_client.fput_object(bucket_name=BUCKET_NAME, object_name=object_name, file_path=file_path)
+        print("File saved")
+    except S3Error as e:
+        print(f"S3 error when uploading bucket: {e}")
+        return
+    except Exception as e:
+        print(f"S3 error when uploading bucket: {e}")
+
+
 if __name__ == "__main__":
-    print(type(get_object("/userid_123/2024/02/18/ZH1.mp4").metadata))
-    print(get_object("/userid_123/2024/02/18/ZH1.mp4").metadata)
+    upload_file("/userid_123/2024/02/18/test_vi.mp4", "/home/minhtranb/works/personal/tvs-refactor/resources/temp/123/test_vi.mp4")

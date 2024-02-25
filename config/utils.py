@@ -1,6 +1,7 @@
 import os
 import pysrt
 from pysrt import SubRipFile
+import shutil
 
 
 def get_file_basename(path: str):
@@ -39,3 +40,12 @@ def get_root_path():
     current_dir = os.path.dirname(__file__)
     root_dir = os.path.join(current_dir, '..', '..')
     return os.path.abspath(root_dir)
+
+
+def delete_files(path):
+    print(f"Removing files in: {path}")
+    try:
+        if os.path.exists(path):
+            shutil.rmtree(path)
+    except Exception as e:
+        print(f"Error deleting files: {str(e)}")

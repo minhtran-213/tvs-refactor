@@ -1,6 +1,8 @@
 import requests
 from requests import HTTPError, Timeout
-import os
+from config import utils
+
+from models.responses import CommonFileResponse
 
 
 class TranslateSrtToLanguageException(Exception):
@@ -8,14 +10,15 @@ class TranslateSrtToLanguageException(Exception):
         super().__init__(f"TranslateSrtToLanguageException - {message or 'Unknown error occurs'}")
 
 
-# Main Translation Function
 def translate_srt_file(srt_path, destination_language, output_path):
+    print(f"Translating subtitles to {destination_language}")
     subtitles = __read_text_from_srt_file(srt_path)
     for subtitle in subtitles:
         translated_text = __translate_text(subtitle['text'], destination_language)
         subtitle['text'] = translated_text
     __write_text_to_srt(subtitles, output_path)
-    return output_path
+    print("Translation done")
+    return CommonFileResponse(file_path=output_path, file_name=utils.get_file_basename(output_path)['filename'])
 
 
 def __parse_subtitle_block(block):
@@ -64,5 +67,5 @@ def __write_text_to_srt(subtitles, output_path):
 
 
 if __name__ == "__main__":
-    translate_srt_file("../../resources/temp/test_en.srt", "vi", "../../resources/temp/test_vi.srt")
+    translate_srt_file("../../resources/temp/123/test_en.srt", "vi", "../../resources/temp/123/test_vi.srt")
     print("Translation done")

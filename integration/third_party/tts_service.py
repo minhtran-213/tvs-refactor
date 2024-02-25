@@ -1,9 +1,13 @@
 from gtts import gTTS
+from onnxruntime.transformers.shape_infer_helper import file_path
+
 from config import utils
 from moviepy.editor import concatenate_audioclips, AudioFileClip, vfx
 from moviepy.audio.AudioClip import AudioClip
 from models.requests import ConvertSrtRequest
+from models.responses import CommonFileResponse
 import os
+from gtts.lang import tts_langs
 
 
 class ConvertSsmlToAudioException(Exception):
@@ -16,8 +20,9 @@ class ConvertSsmlToAudioException(Exception):
 
 
 def convert_text_to_audio_using_gtts(text, filename, lang):
+    code = __get_supported_language(lang)
     try:
-        speech = gTTS(text, lang)
+        speech = gTTS(text, lang=code)
         speech.save(filename)
     except Exception as e:
         raise ValueError(f'Translating google failed: {str(e)}')
@@ -28,13 +33,14 @@ def __subrip_to_milliseconds(subrip_time):
             subrip_time.seconds * 1000) + subrip_time.milliseconds
 
 
-def convert_subtitles_to_audio(origin_sub_path: str, convert_request: ConvertSrtRequest):
-    subs = utils.get_subtitle_file(origin_sub_path)
+def convert_subtitles_to_audio(sub_path: str, convert_request: ConvertSrtRequest, user_id: str):
+    subs = utils.get_subtitle_file(sub_path)
 
     audio_clips = []
     timeline = 0  # This is to hold the current timeline
 
-    origin_path = os.path.dirname(origin_sub_path)
+    origin_path = os.path.dirname(sub_path)
+    temp_dir = os.path.join(origin_path, 'temp', user_id)
 
     try:
         for i in range(len(subs)):
@@ -51,7 +57,6 @@ def convert_subtitles_to_audio(origin_sub_path: str, convert_request: ConvertSrt
                 audio_clips.append(silence_clip)
                 timeline += silence_duration * 1000  # Update timeline
 
-            temp_dir = os.path.join(origin_path, 'temp')
             if not os.path.exists(temp_dir):
                 os.makedirs(temp_dir)
 
@@ -81,11 +86,13 @@ def convert_subtitles_to_audio(origin_sub_path: str, convert_request: ConvertSrt
         final_audio = concatenate_audioclips(audio_clips)
 
         # Create the output filename based on the input filename
-        srt_basename = os.path.basename(origin_sub_path)
+        srt_basename = os.path.basename(sub_path)
         srt_name, _ = os.path.splitext(srt_basename)
         output_filename = os.path.join(origin_path, f'{srt_name}_{convert_request.code}.mp3')
         final_audio.write_audiofile(output_filename, bitrate='184k')
-        return output_filename
+        utils.delete_files(temp_dir)
+        return CommonFileResponse(file_path=output_filename,
+                                  file_name=utils.get_file_basename(output_filename)['filename'])
     except Exception as e:
         print(f"Converting srt to audio failed: {str(e)}")
         raise ConvertSsmlToAudioException(e)
@@ -101,8 +108,12 @@ def __get_subtitle_info(sub):
     }
 
 
-if __name__ == "__main__":
-    srt_path = '/home/minhtranb/works/personal/tvs-refactor/resources/temp/test_vi.srt'
-    convert_requests = ConvertSrtRequest(code='en')
-    convert_subtitles_to_audio(srt_path, convert_requests)
-    print("Done!")
+def __get_supported_language(lang: str):
+    prefix = lang.split("-")[0]
+    gtts_langs = tts_langs()
+    for key in gtts_langs:
+        if key.startswith(prefix):
+            return key
+
+
+

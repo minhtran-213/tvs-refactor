@@ -69,6 +69,6 @@ def __format_timestamp(seconds):
 
 
 if __name__ == "__main__":
-    file_paths = '/home/minhtranb/works/personal/tvs-refactor/resources/temp/test.mp4'
-    result = process_srt(file_paths, "translate")
+    file_paths = '/home/minhtranb/works/personal/tvs-refactor/resources/temp/123/test.mp4'
+    result = process_srt(file_paths, "123", basename="test")
     print(result)

@@ -13,3 +13,4 @@ pytest
 torch
 pysrt
 moviepy
+onnx
