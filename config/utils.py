@@ -1,4 +1,6 @@
 import os
+import pysrt
+from pysrt import SubRipFile
 
 
 def get_file_basename(path: str):
@@ -8,6 +10,16 @@ def get_file_basename(path: str):
         'extension': os.path.splitext(filename)[1],
         'filename': filename
     }
+
+
+def get_subtitle_file(input_path: str) -> SubRipFile:
+    try:
+        subs = pysrt.open(input_path, encoding='utf-8')
+        return subs
+    except FileNotFoundError as e:
+        print(f"File not found error: {str(e)}")
+    except UnicodeDecodeError as e:
+        print(f"Unicode decode error: {str(e)}")
 
 
 def get_dirname(path: str):

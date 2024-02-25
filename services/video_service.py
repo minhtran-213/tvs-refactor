@@ -4,7 +4,7 @@ from config import utils
 from models.entities import VideoFileStoragesEntity
 from models.requests import MinIORequest
 from models.enums import ProcessStatus
-from integration.third_party import minio_client, ffmpeg, fastapi
+from integration.third_party import minio_client, ffmpeg, fastapi, libretranslate
 from services import locale_service
 
 
@@ -33,10 +33,13 @@ def __convert_video_information_to_entity(video_information: dict, video_file_st
     return video_file_storage
 
 
-def processing_video(file_path: str, locale_code: str):
-    transcribe_result = fastapi.process_srt(file_path)
-    origin_path = utils.get_dirname(transcribe_result['srt_en_path'])
-
+def processing_video(file_path: str, locale_code: str, video_file_information: dict):
+    basename = video_file_information['basename']
+    transcribe_result = fastapi.process_srt(file_path, user_id=video_file_information['user_id'],
+                                            basename=basename)
+    resources_dir = utils.get_dirname(transcribe_result['srt_en_path'])
+    translated_srt_path = libretranslate.translate_srt_file(transcribe_result['srt_en_path'], locale_code,
+                                                            resources_dir + f'/{basename}_{locale_code}.srt')
 
 
 def __get_video_file_information_from_filepath(filepath: str):

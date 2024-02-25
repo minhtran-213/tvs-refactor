@@ -2,9 +2,11 @@ import requests
 from requests import HTTPError, Timeout
 import os
 
+
 class TranslateSrtToLanguageException(Exception):
     def __init__(self, message=None):
         super().__init__(f"TranslateSrtToLanguageException - {message or 'Unknown error occurs'}")
+
 
 # Main Translation Function
 def translate_srt_file(srt_path, destination_language, output_path):
@@ -13,12 +15,15 @@ def translate_srt_file(srt_path, destination_language, output_path):
         translated_text = __translate_text(subtitle['text'], destination_language)
         subtitle['text'] = translated_text
     __write_text_to_srt(subtitles, output_path)
+    return output_path
+
 
 def __parse_subtitle_block(block):
     number = block[0]
     time_code = block[1]
     text = ' '.join(block[2:])
     return {'number': number, 'time_code': time_code, 'text': text}
+
 
 # Reading SRT File
 def __read_text_from_srt_file(srt_path):
@@ -35,17 +40,19 @@ def __read_text_from_srt_file(srt_path):
         subtitles.append(__parse_subtitle_block(subtitle))
     return subtitles
 
+
 # API Call to Translate
 def __translate_text(text, destination_language):
-    api = os.getenv('TRANSLATE_API_ENDPOINT_TRANSLATE')
+    api = "http://localhost:5000/translate"
     param = {"q": text, "source": "en", "target": destination_language, "format": "text"}
     try:
         response = requests.post(api, params=param)
-        response.raise_for_status()  # Raises HTTPError for bad responses
+        response.raise_for_status()
         return response.json().get('translatedText', '')
     except (HTTPError, Timeout, ConnectionError) as e:
         print(f"HTTP request failed: {e}")
         raise TranslateSrtToLanguageException(str(e))
+
 
 # Writing to SRT
 def __write_text_to_srt(subtitles, output_path):
@@ -54,3 +61,8 @@ def __write_text_to_srt(subtitles, output_path):
             f.write(f"{subtitle['number']}\n")
             f.write(f"{subtitle['time_code']}\n")
             f.write(f"{subtitle['text']}\n\n")
+
+
+if __name__ == "__main__":
+    translate_srt_file("../../resources/temp/test_en.srt", "vi", "../../resources/temp/test_vi.srt")
+    print("Translation done")

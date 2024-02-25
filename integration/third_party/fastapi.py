@@ -10,12 +10,12 @@ print(device)
 model = WhisperModel("medium", device="cpu", compute_type="int8")
 
 
-def process_srt(file_path: str, task: Optional[str] = "translate"):
+def process_srt(file_path: str, user_id: str, basename: str, task: Optional[str] = "translate"):
     transcribe_result = __transcribe(file_path, task)
     if not transcribe_result:
         print("Cannot transcribe")
         return
-    srt_full_path = __convert_to_srt(transcribe_result['transcribe_chunk'], "test")
+    srt_full_path = __convert_to_srt(transcribe_result['transcribe_chunk'], basename, user_id)
     return {
         "srt_en_path": srt_full_path,
         "detected_language": transcribe_result['detected_language'] if transcribe_result['detected_language'] else "en"
@@ -37,9 +37,9 @@ def __transcribe(file_path: str, task: Optional[str]):
         print(f"Transcribing audio failed: {e}")
 
 
-def __convert_to_srt(translate_result, filename):
+def __convert_to_srt(translate_result, filename, user_id: str):
     print("Converting to SRT")
-    srt_full_path = f'../../resources/temp/{filename}_en.srt'
+    srt_full_path = f'../../resources/temp/{user_id}/{filename}_en.srt'
     with open(srt_full_path, "w") as file:
         sentence = []
         start_time = None

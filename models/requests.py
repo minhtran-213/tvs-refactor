@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -19,3 +19,9 @@ class MinIORequest(BaseModel):
         video_file_storage_entity.size = str(minio_request.records[0].get("s3").get("object").get("size"))
         return video_file_storage_entity
 
+
+class ConvertSrtRequest:
+    def __init__(self, code: str,  voice_name: Optional[str] = "None", gender: Optional[str] = "None"):
+        self.voice_name = voice_name
+        self.gender = gender
+        self.code = code
