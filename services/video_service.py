@@ -26,9 +26,10 @@ def handle_minio_notification(db: Session, minio_request: MinIORequest, backgrou
 
     db.add(video_file_storage)
     db.commit()
+    db.refresh(video_file_storage)
 
     background_tasks.add_task(processing_video, video_information['file_path'], locale_code, video_information,
-                              minio_request.key)
+                              minio_request.key, video_file_storage.id)
     return {"data": "File created"}
 
 
@@ -43,7 +44,8 @@ def __convert_video_information_to_entity(video_information: dict, video_file_st
     return video_file_storage
 
 
-def processing_video(file_path: str, locale_code: str, video_file_information: dict, minio_filepath: str):
+def processing_video(file_path: str, locale_code: str, video_file_information: dict,
+                     minio_filepath: str, video_id: int, db: Session):
     print("Processing video")
     basename = video_file_information['basename']
     transcribe_result = fastapi.process_srt(file_path, user_id=video_file_information['user_id'],
@@ -61,6 +63,10 @@ def processing_video(file_path: str, locale_code: str, video_file_information: d
                              subtitle_result['subtitle_filepath'])
     minio_client.upload_file(minio_dirname.join(f"/{translated_video_result.file_name}"),
                              translated_video_result.file_path)
+
+    db.query(VideoFileStoragesEntity).filter(VideoFileStoragesEntity.id == video_id) \
+        .update({"process_status": ProcessStatus.DONE})
+    db.commit()
 
 
 def __get_subtitle_results(transcribe_result, locale_code, basename):

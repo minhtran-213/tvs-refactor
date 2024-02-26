@@ -1,4 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, BackgroundTasks
+from sqlalchemy.orm import Session
+
+from config.database import get_db
 
 router = APIRouter(
     prefix="/videos",
@@ -17,5 +20,5 @@ async def create():
 
 
 @router.post("/youtube-links")
-async def upload_by_youtube():
+async def upload_by_youtube(db: Session = Depends(get_db)):
     return {"data": "Youtube link uploaded"}

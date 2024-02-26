@@ -12,4 +12,4 @@ router = APIRouter(
 
 @router.get("")
 async def get_all(db: Session = Depends(get_db)):
-    return locale_services.get_all(db)
+    return locale_service.get_all(db)
