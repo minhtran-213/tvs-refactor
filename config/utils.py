@@ -1,7 +1,10 @@
 import os
 import pysrt
 from pysrt import SubRipFile
+from fastapi import UploadFile
 import shutil
+from datetime import datetime
+from typing import List
 
 
 def get_file_basename(path: str):
@@ -49,3 +52,24 @@ def delete_files(path):
             shutil.rmtree(path)
     except Exception as e:
         print(f"Error deleting files: {str(e)}")
+
+def get_current_date_info():
+    current_datetime = datetime.now()
+    current_year = current_datetime.year
+    current_month = current_datetime.month
+    current_date = current_datetime.day
+    return {
+        'year': current_year,
+        'month': current_month,
+        'day': current_date
+    }
+
+def download_file_to_local(upload_file_list: List[UploadFile], user_id: str):
+    for upload_file in upload_file_list:
+        basename = get_file_basename(upload_file.filename)['basename']
+        path = f'{user_id}/{basename}/{upload_file.filename}'
+        with open(path, 'w+b') as buffer:
+            try:
+                shutil.copyfileobj(upload_file.file, buffer)
+            except Exception as e:
+                print(f'Cannot download file to local: {e}')

@@ -1,13 +1,26 @@
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, UploadFile, File, Form
 from sqlalchemy.orm import Session
-
 from config import utils
+from typing import List, Optional
 from models.entities import VideoFileStoragesEntity
-from models.requests import MinIORequest, ConvertSrtRequest
+from models.requests import MinIORequest, ConvertSrtRequest, VideoOptionRequest
 from models.enums import ProcessStatus
 from integration.third_party import minio_client, ffmpeg, fastapi, libretranslate, tts_service
 from services import locale_service
+import shutil
 
+def process_uploaded_files(
+                            db: Session,
+                            files: List[UploadFile] = File(...),
+                            user_id: str = Form(...),
+                            video_option_request: VideoOptionRequest = Form(...),
+                            output_language: str = Form(...),
+                            labels: Optional[str] = Form(None)
+                        ):
+    utils.download_file_to_local(files)
+    current_date_info = utils.get_current_date_info
+    MINIO_FILE_PATH = f'{user_id}/{current_date_info['year']}/{current_date_info['month']}/{current_date_info['day']}'
+    
 
 def handle_minio_notification(db: Session, minio_request: MinIORequest, background_tasks: BackgroundTasks):
     video_file_storage: VideoFileStoragesEntity = MinIORequest.convert_to_video_file_storage_entity(minio_request)

@@ -11,6 +11,6 @@ youtube-dl @ git+https://github.com/ytdl-org/youtube-dl.git@be008e657d79832642e2
 gTTS
 pytest
 torch
-pysrt
 moviepy
+pysrt
 onnx
