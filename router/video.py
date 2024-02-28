@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from models.enums import VideoOptionRequest
 from config.database import get_db
+from services import video_service
 
 router = APIRouter(
     prefix="/videos",
@@ -20,10 +21,9 @@ async def create(db: Session = Depends(get_db),
                  files: List[UploadFile] = File(...),
                  user_id: str = Form(...),
                  video_option_request: VideoOptionRequest = Form(...),
-                 output_language: str = Form(...),
-                 labels: Optional[str] = Form(None)
+                 output_language: str = Form(...)
                  ):
-    return {"data": "File created"}
+    video_service.process_uploaded_files(db, files, user_id, video_option_request, output_language)
 
 
 @router.post("/youtube-links")

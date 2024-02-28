@@ -3,24 +3,40 @@ from sqlalchemy.orm import Session
 from config import utils
 from typing import List, Optional
 from models.entities import VideoFileStoragesEntity
-from models.requests import MinIORequest, ConvertSrtRequest, VideoOptionRequest
-from models.enums import ProcessStatus
+from models.requests import MinIORequest, ConvertSrtRequest
+from models.enums import ProcessStatus, VideoOptionRequest
 from integration.third_party import minio_client, ffmpeg, fastapi, libretranslate, tts_service
+from integration.repository import video_repository
 from services import locale_service
 import shutil
 
+
 def process_uploaded_files(
-                            db: Session,
-                            files: List[UploadFile] = File(...),
-                            user_id: str = Form(...),
-                            video_option_request: VideoOptionRequest = Form(...),
-                            output_language: str = Form(...),
-                            labels: Optional[str] = Form(None)
-                        ):
-    utils.download_file_to_local(files)
-    current_date_info = utils.get_current_date_info
-    MINIO_FILE_PATH = f'{user_id}/{current_date_info['year']}/{current_date_info['month']}/{current_date_info['day']}'
-    
+        db: Session,
+        files: List[UploadFile] = File(...),
+        user_id: str = Form(...),
+        video_option_request: VideoOptionRequest = Form(...),
+        output_language: str = Form(...)
+):
+    __remove_duplicated_files(db, files)
+    valid_file_path_list = utils.download_file_to_local(files, user_id)
+    current_year = utils.get_current_date_info()['year']
+    current_month = utils.get_current_date_info()['month']
+    current_day = utils.get_current_date_info()['day']
+    MINIO_FILE_PATH = f'{user_id}/{current_year}/{current_month}/{current_day}'
+
+
+def __remove_duplicated_files(db: Session, file_list: List[UploadFile]):
+    for file in file_list:
+        current_filename = file.filename
+        video_file = video_repository.get_video_by_filename(db, current_filename)
+        if video_file:
+            print(f"File {current_filename} already exists")
+            db.query(VideoFileStoragesEntity).filter(VideoFileStoragesEntity.id == video_file.id) \
+                .update({"process_status": ProcessStatus.DUPLICATED})
+            db.commit()
+            file_list.remove(file)
+
 
 def handle_minio_notification(db: Session, minio_request: MinIORequest, background_tasks: BackgroundTasks):
     video_file_storage: VideoFileStoragesEntity = MinIORequest.convert_to_video_file_storage_entity(minio_request)

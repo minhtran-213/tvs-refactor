@@ -41,7 +41,7 @@ def get_user_id_from_filepath(filepath: str):
 
 def get_root_path():
     current_dir = os.path.dirname(__file__)
-    root_dir = os.path.join(current_dir, '..', '..')
+    root_dir = os.path.join(current_dir, '..')
     return os.path.abspath(root_dir)
 
 
@@ -52,6 +52,7 @@ def delete_files(path):
             shutil.rmtree(path)
     except Exception as e:
         print(f"Error deleting files: {str(e)}")
+
 
 def get_current_date_info():
     current_datetime = datetime.now()
@@ -64,12 +65,22 @@ def get_current_date_info():
         'day': current_date
     }
 
+
 def download_file_to_local(upload_file_list: List[UploadFile], user_id: str):
+    upload_file_paths = []
+    root_dir = get_root_path()
     for upload_file in upload_file_list:
         basename = get_file_basename(upload_file.filename)['basename']
-        path = f'{user_id}/{basename}/{upload_file.filename}'
+        extension = get_file_basename(upload_file.filename)['extension']
+        resources_dir = os.path.join(root_dir, "resources", user_id)
+        if not os.path.exists(resources_dir):
+            os.mkdir(resources_dir)
+        path = os.path.join(resources_dir, f'{basename}{extension}')
         with open(path, 'w+b') as buffer:
             try:
                 shutil.copyfileobj(upload_file.file, buffer)
+                upload_file_paths.append(path)
             except Exception as e:
                 print(f'Cannot download file to local: {e}')
+
+    return upload_file_paths
