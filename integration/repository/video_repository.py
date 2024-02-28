@@ -7,3 +7,10 @@ def get_video_by_filename(db: Session, filename: str) -> VideoFileStoragesEntity
     if video_file_storage:
         return video_file_storage
     return None
+
+
+def create(db: Session, video_file_storage: VideoFileStoragesEntity) -> VideoFileStoragesEntity:
+    db.add(video_file_storage)
+    db.commit()
+    db.refresh(video_file_storage)
+    return video_file_storage

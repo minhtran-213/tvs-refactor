@@ -13,4 +13,5 @@ pytest
 torch
 moviepy
 pysrt
-onnx
+cmake
+onnxruntime
