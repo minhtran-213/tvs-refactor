@@ -17,13 +17,14 @@ async def get_all():
 
 
 @router.post("/files")
-async def create(db: Session = Depends(get_db),
+async def create(background_task: BackgroundTasks,
+                 db: Session = Depends(get_db),
                  files: List[UploadFile] = File(...),
                  user_id: str = Form(...),
                  video_option_request: VideoOptionRequest = Form(...),
                  output_language: str = Form(...)
                  ):
-    video_service.process_uploaded_files(db, files, user_id, video_option_request, output_language)
+    video_service.process_uploaded_files(background_task, db, files, user_id, video_option_request, output_language)
 
 
 @router.post("/youtube-links")

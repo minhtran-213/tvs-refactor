@@ -9,14 +9,16 @@ from integration.third_party import minio_client, ffmpeg, fastapi, libretranslat
 from integration.repository import video_repository
 from services import locale_service
 
+
 def process_uploaded_files(
-        db: Session,
         background_task: BackgroundTasks,
-        files: List[UploadFile] = File(...),
-        user_id: str = Form(...),
-        video_option_request: VideoOptionRequest = Form(...),
-        output_language: str = Form(...)
+        db: Session,
+        files: List[UploadFile],
+        user_id: str,
+        video_option_request: VideoOptionRequest,
+        output_language: str
 ):
+    print(type(files))
     __remove_duplicated_files(db, files)
     valid_file_path_list = utils.download_file_to_local(files, user_id)
     MINIO_FILE_PATH = __get_minio_file_path(user_id)
@@ -76,7 +78,6 @@ def __save_new_video(db: Session, user_id: str, filepath: str):
     video_repository.create(db, video_file_storage)
 
 
-
 def __get_video_file_information_from_filepath(filepath: str):
     basename_result = utils.get_file_basename(filepath)
     metadata_result = ffmpeg.get_video_metadata(filepath)
@@ -89,13 +90,14 @@ def __get_video_file_information_from_filepath(filepath: str):
         'basename': basename_result['basename']
     }
 
+
 def handle_minio_notification(db: Session, minio_request: MinIORequest, background_tasks: BackgroundTasks):
     video_file_storage: VideoFileStoragesEntity = MinIORequest.convert_to_video_file_storage_entity(minio_request)
     video_information = __get_video_file_information_from_minio_filepath(minio_request.key)
     if video_information['extension'] in ['mp4', 'mov']:
         print("Extension not supported!")
         return
-    video_file_storage = __convert_video_information_to_entity(video_information, video_file_storage)
+    __convert_video_information_to_entity(video_information, video_file_storage)
 
     locale_code = video_information['basename'].split("_")[1]
     locale = locale_service.get_by_code(db, locale_code)
@@ -114,38 +116,11 @@ def handle_minio_notification(db: Session, minio_request: MinIORequest, backgrou
 
 
 def __convert_video_information_to_entity(video_information: dict, video_file_storage: VideoFileStoragesEntity):
-    video_file_storage.external_file_path = video_information['file_path']
-    video_file_storage.content_type = video_information['content-type']
     video_file_storage.file_duration = video_information['duration']
     video_file_storage.file_resolution = video_information['resolution']
     video_file_storage.file_name = video_information['filename']
     video_file_storage.process_status = ProcessStatus.PROCESSING
     video_file_storage.file_extension = video_information['extension']
-
-
-def processing_video(file_path: str, locale_code: str, video_file_information: dict,
-                     minio_filepath: str, video_id: int, db: Session):
-    print("Processing video")
-    basename = video_file_information['basename']
-    transcribe_result = fastapi.process_srt(file_path, user_id=video_file_information['user_id'],
-                                            basename=basename)
-    subtitle_result = __get_subtitle_results(transcribe_result, locale_code, basename)
-
-    convert_subtitle_request = ConvertSrtRequest(code=locale_code)
-    translated_audio_result = tts_service.convert_subtitles_to_audio(subtitle_result['subtitle_filepath'],
-                                                                     convert_subtitle_request,
-                                                                     video_file_information['user_id'])
-    translated_video_result = ffmpeg.combine_video(file_path, subtitle_result['subtitle_filepath'],
-                                                   translated_audio_result.file_path, locale_code)
-    minio_dirname = utils.get_dirname(utils.get_minio_filepath_without_bucket(minio_filepath))
-    minio_client.upload_file(minio_dirname.join(f"/{subtitle_result['subtitle_filename']}"),
-                             subtitle_result['subtitle_filepath'])
-    minio_client.upload_file(minio_dirname.join(f"/{translated_video_result.file_name}"),
-                             translated_video_result.file_path)
-
-    db.query(VideoFileStoragesEntity).filter(VideoFileStoragesEntity.id == video_id) \
-        .update({"process_status": ProcessStatus.DONE})
-    db.commit()
 
 
 def __get_subtitle_results(transcribe_result, locale_code, basename):
@@ -180,5 +155,3 @@ def __get_video_file_information_from_minio_filepath(minio_filepath: str):
         'extension': basename_result['extension'],
         'basename': basename_result['basename']
     }
-
-
