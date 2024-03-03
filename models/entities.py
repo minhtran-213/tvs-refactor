@@ -11,6 +11,25 @@ class AbstractEntity:
     modified_by = Column(String)
 
 
+class UserEntity(Base, AbstractEntity):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True)
+    full_name = Column(String)
+    email = Column(String)
+    password = Column(String)
+    phone_number = Column(String)
+    date_of_birth = Column(DateTime)
+    gender = Column(String)
+    role_code = Column(String)
+    status = Column(String)
+    created_at = Column(DateTime)
+    modified_at = Column(DateTime)
+    created_by = Column(String)
+    modified_by = Column(String)
+    version = Column(Integer)
+
+
 class GttsLanguageEntity(Base, AbstractEntity):
     __tablename__ = "gtts_languages"
 
@@ -50,13 +69,10 @@ class VideoFileStoragesEntity(Base, AbstractEntity):
     file_resolution = Column(String)
     input_locale_id = Column(Integer, ForeignKey('locale.id'))
     output_locale_id = Column(Integer, ForeignKey('locale.id'))
-    user_id = Column(Integer)
+    user_id = Column(Integer, ForeignKey('users.id'))
     size = Column(String)
     external_file_path = Column(String)
     youtube_links = Column(String)
-
-    def __init__(self):
-        pass
 
 
 class SubtitleFileStorageEntity(Base):
@@ -69,11 +85,3 @@ class SubtitleFileStorageEntity(Base):
     locale_id = Column(Integer, ForeignKey("locale.id"))
     video_file_id = Column(Integer, ForeignKey("video_file_storages.id"))
     type = Column(String)
-
-    def __init__(self, file_path, file_name, file_extension, locale_id, video_file_id, type):
-        self.file_path = file_path
-        self.file_name = file_name
-        self.file_extension = file_extension
-        self.locale_id = locale_id
-        self.video_file_id = video_file_id
-        self.type = type

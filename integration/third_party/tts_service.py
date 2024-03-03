@@ -109,7 +109,7 @@ def __get_subtitle_info(sub):
 
 
 def __get_supported_language(lang: str):
-    prefix = lang.split("-")[0]
+    prefix = lang.split("_")[0]
     gtts_langs = tts_langs()
     for key in gtts_langs:
         if key.startswith(prefix):

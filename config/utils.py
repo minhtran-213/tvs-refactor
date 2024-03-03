@@ -66,7 +66,7 @@ def get_current_date_info():
     }
 
 
-def download_file_to_local(upload_file_list: List[UploadFile], user_id: str):
+def download_file_to_local(upload_file_list, user_id: str):
     upload_file_paths = []
     root_dir = get_root_path()
     for upload_file in upload_file_list:

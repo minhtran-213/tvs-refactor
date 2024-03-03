@@ -1,6 +1,7 @@
 import subprocess
 import json
 from config import utils
+from models.enums import VideoOptionRequest
 from models.responses import CommonFileResponse
 
 
@@ -28,7 +29,8 @@ def get_video_metadata(video_path: str):
         print(f"Error decoding JSON: {e}")
 
 
-def combine_video(video_path: str, subtitle_path: str, audio_path: str, locale_code: str):
+def combine_video(video_path: str, subtitle_path: str, audio_path: str, locale_code: str,
+                  video_option_request: VideoOptionRequest) -> CommonFileResponse:
     print("Combining video")
     dirname = utils.get_dirname(video_path)
     basename = utils.get_file_basename(video_path)['basename']
@@ -38,19 +40,20 @@ def combine_video(video_path: str, subtitle_path: str, audio_path: str, locale_c
         '-i', video_path,
         '-y'
     ]
+    if video_option_request.AUDIO:
+        combine_request.extend([
+            '-i', audio_path,
+            '-c:a', 'aac',
+            '-strict', 'experimental',
+            '-map', '0:v',
+            '-map', '1:a',
+        ])
 
-    combine_request.extend([
-        '-i', audio_path,
-        '-c:a', 'aac',
-        '-strict', 'experimental',
-        '-map', '0:v',
-        '-map', '1:a',
-    ])
-
-    combine_request.extend([
-        '-vf',
-        f"subtitles='{subtitle_path}':force_style='Fontname=Noto Sans CJK SC,OutlineColour=&H40000000,BorderStyle=4'"
-    ])
+    if video_option_request.SUB:
+        combine_request.extend([
+            '-vf',
+            f"subtitles='{subtitle_path}':force_style='Fontname=Noto Sans CJK SC,OutlineColour=&H40000000,BorderStyle=4'"
+        ])
 
     combine_request.append(output_path)
 
@@ -60,7 +63,8 @@ def combine_video(video_path: str, subtitle_path: str, audio_path: str, locale_c
 
 
 if __name__ == "__main__":
-    video_paths = "/home/minhtranb/works/personal/tvs-refactor/resources/temp/123/test.mp4"
+    video_paths = "/home/minhtranb/works/personal/tvs-refactor/resources/211/ZH1.mp4"
     audio_paths = '/home/minhtranb/works/personal/tvs-refactor/resources/temp/123/test_vi_vi.mp3'
     subtitle_paths = '/home/minhtranb/works/personal/tvs-refactor/resources/temp/123/test_vi.srt'
-    combine_video(video_paths, subtitle_paths, audio_paths, "vi")
+    resultss = get_video_metadata(video_paths)
+    print(resultss)

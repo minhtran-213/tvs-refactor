@@ -4,18 +4,20 @@ from faster_whisper import WhisperModel
 import torch
 import os
 
+from config import utils
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 compute_type = "float16" if device == "cuda" else "int8"
 print(device)
 model = WhisperModel("medium", device="cpu", compute_type="int8")
 
 
-def process_srt(file_path: str, user_id: str, basename: str, task: Optional[str] = "translate"):
+def process_srt(file_path: str, user_id: str, video_id: str, basename: str, task: Optional[str] = "translate"):
     transcribe_result = __transcribe(file_path, task)
     if not transcribe_result:
         print("Cannot transcribe")
         return
-    srt_full_path = __convert_to_srt(transcribe_result['transcribe_chunk'], basename, user_id)
+    srt_full_path = __convert_to_srt(transcribe_result['transcribe_chunk'], basename, user_id, video_id)
     return {
         "srt_en_path": srt_full_path,
         "detected_language": transcribe_result['detected_language'] if transcribe_result['detected_language'] else "en"
@@ -37,9 +39,14 @@ def __transcribe(file_path: str, task: Optional[str]):
         print(f"Transcribing audio failed: {e}")
 
 
-def __convert_to_srt(translate_result, filename, user_id: str):
+def __convert_to_srt(translate_result, filename, user_id: str, video_id: str):
     print("Converting to SRT")
-    srt_full_path = f'../../resources/temp/{user_id}/{filename}_en.srt'
+    root_path = utils.get_root_path()
+    # srt_full_path = f'../../resources/temp/{user_id}/{filename}_en.srt'
+    video_dir = os.path.join(root_path, "resources", user_id, video_id)
+    srt_full_path = os.path.join(video_dir, f"{filename}_en.srt")
+    if not os.path.exists(video_dir):
+        os.makedirs(video_dir, exist_ok=True)
     with open(srt_full_path, "w") as file:
         sentence = []
         start_time = None
@@ -68,7 +75,7 @@ def __format_timestamp(seconds):
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02},{int((seconds - int(seconds)) * 1000):03}"
 
 
-if __name__ == "__main__":
-    file_paths = '/home/minhtranb/works/personal/tvs-refactor/resources/temp/123/test.mp4'
-    result = process_srt(file_paths, "123", basename="test")
-    print(result)
+# if __name__ == "__main__":
+#     file_paths = '/home/minhtranb/works/personal/tvs-refactor/resources/temp/123/test.mp4'
+#     result = process_srt(file_paths, "123", basename="test")
+#     print(result)
