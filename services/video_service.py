@@ -13,6 +13,19 @@ from models.requests import ConvertSrtRequest
 from models.responses import CommonFileResponse
 
 
+def process_youtube_links(background_task: BackgroundTasks,
+        db: Session,
+        youtube_links: List[str],
+        user_id: str,
+        video_option_request: VideoOptionRequest,
+        output_language: str):
+    
+    minio_file_path = __get_minio_file_path(user_id)
+    for youtube_link in youtube_links:
+        pass
+    
+
+
 def process_uploaded_files(
         background_task: BackgroundTasks,
         db: Session,
@@ -49,7 +62,7 @@ def processing_video(file_path: str, locale_code: str, video_file_information: d
                                                    translated_audio_result.file_path, locale_code, video_option_request)
     uploaded_filepath_result = __upload_files_to_minio_storage(minio_filepath, subtitle_result, translated_video_result)
     __update_video_info(db, video_id, uploaded_filepath_result)
-    subtitle_service.save_uploaded_subtitles(db, video_id)
+    subtitle_service.save_uploaded_subtitles(db, video_id, subtitle_result)
 
 
 def __update_video_info(db: Session, video_id: int, uploaded_filepath_result: dict):
@@ -149,21 +162,3 @@ def __get_subtitle_results(transcribe_result, locale_code, basename):
         }
     }
 
-
-def __get_video_file_information_from_minio_filepath(minio_filepath: str):
-    filepath = utils.get_minio_filepath_without_bucket(minio_filepath)
-    user_id = utils.get_user_id_from_filepath(str(filepath))
-    basename_result = utils.get_file_basename(filepath)
-    minio_object = minio_client.get_object(filepath, user_id)
-    metadata_result = ffmpeg.get_video_metadata(minio_object['file_path'])
-
-    return {
-        'user_id': user_id,
-        'file_path': minio_object['file_path'],
-        'filename': basename_result['filename'],
-        'content-type': minio_object['content-type'],
-        'duration': metadata_result['stream']['duration'],
-        'resolution': str(metadata_result['stream']['width']) + "x" + str(metadata_result['stream']['height']),
-        'extension': basename_result['extension'],
-        'basename': basename_result['basename']
-    }
