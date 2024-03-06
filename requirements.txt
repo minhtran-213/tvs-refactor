@@ -1,16 +1,17 @@
-fastapi
-requests
-uvicorn
+fastapi~=0.109.2
+requests~=2.31.0
+uvicorn~=0.27.1
 psycopg2-binary
-sqlalchemy
+sqlalchemy~=2.0.27
 python-multipart
 aiofiles
-minio
+minio~=7.2.4
 faster-whisper
 youtube-dl @ git+https://github.com/ytdl-org/youtube-dl.git@be008e657d79832642e2158557c899249c9e31cd
-gTTS
+gTTS~=2.5.1
 pytest
-torch
-moviepy
-pysrt
-onnxruntime
+torch~=2.2.0
+moviepy~=1.0.3
+pysrt~=1.1.2
+onnxruntime~=1.17.0
+pydantic~=2.6.1

@@ -1,5 +1,7 @@
 import subprocess
 import json
+from typing import List
+
 from config import utils
 from models.enums import VideoOptionRequest
 from models.responses import CommonFileResponse
@@ -30,17 +32,17 @@ def get_video_metadata(video_path: str):
 
 
 def combine_video(video_path: str, subtitle_path: str, audio_path: str, locale_code: str,
-                  video_option_request: VideoOptionRequest) -> CommonFileResponse:
+                  video_option_request: List[VideoOptionRequest], video_id: str) -> CommonFileResponse:
     print("Combining video")
     dirname = utils.get_dirname(video_path)
     basename = utils.get_file_basename(video_path)['basename']
-    output_path = f"{dirname}/{basename}_{locale_code}.mp4"
+    output_path = f"{dirname}/{video_id}/{basename}_{locale_code}.mp4"
     combine_request = [
         'ffmpeg',
         '-i', video_path,
         '-y'
     ]
-    if video_option_request.AUDIO:
+    if VideoOptionRequest.AUDIO in video_option_request and audio_path is not None:
         combine_request.extend([
             '-i', audio_path,
             '-c:a', 'aac',
@@ -49,7 +51,7 @@ def combine_video(video_path: str, subtitle_path: str, audio_path: str, locale_c
             '-map', '1:a',
         ])
 
-    if video_option_request.SUB:
+    if VideoOptionRequest.SUB in video_option_request and subtitle_path is not None:
         combine_request.extend([
             '-vf',
             f"subtitles='{subtitle_path}':force_style='Fontname=Noto Sans CJK SC,OutlineColour=&H40000000,BorderStyle=4'"

@@ -1,12 +1,10 @@
 import os
+import shutil
+from datetime import datetime
+
 import pysrt
 import youtube_dl
 from pysrt import SubRipFile
-from fastapi import UploadFile
-import shutil
-from datetime import datetime
-from typing import List
-
 
 
 def get_file_basename(path: str):
@@ -88,9 +86,9 @@ def download_file_to_local(upload_file_list, user_id: str):
     return upload_file_paths
 
 
-def download_youtube_link(video_link: str, user_id: int, video_id: str):
+def download_youtube_link(video_link: str, user_id: str):
     root_path = get_root_path()
-    youtube_file = os.path.join(root_path, 'result', str(user_id), video_id, '%(title)s.%(ext)s')
+    youtube_file = os.path.join(root_path, 'resources', user_id, '%(title)s.%(ext)s')
 
     # Download video using youtube-dl with appropriate options
     ydl_opts = {
@@ -113,4 +111,4 @@ def download_youtube_link(video_link: str, user_id: int, video_id: str):
             'filepath': video_path
         }
     except Exception as e:
-        print(f"Error downloading from youtube linK : {video_link}: {e.message}")
+        print(f"Error downloading from youtube linK : {video_link}: {e}")

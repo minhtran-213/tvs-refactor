@@ -42,7 +42,6 @@ def __transcribe(file_path: str, task: Optional[str]):
 def __convert_to_srt(translate_result, filename, user_id: str, video_id: str):
     print("Converting to SRT")
     root_path = utils.get_root_path()
-    # srt_full_path = f'../../resources/temp/{user_id}/{filename}_en.srt'
     video_dir = os.path.join(root_path, "resources", user_id, video_id)
     srt_full_path = os.path.join(video_dir, f"{filename}_en.srt")
     if not os.path.exists(video_dir):
@@ -75,7 +74,7 @@ def __format_timestamp(seconds):
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02},{int((seconds - int(seconds)) * 1000):03}"
 
 
-# if __name__ == "__main__":
-#     file_paths = '/home/minhtranb/works/personal/tvs-refactor/resources/temp/123/test.mp4'
-#     result = process_srt(file_paths, "123", basename="test")
-#     print(result)
+if __name__ == "__main__":
+    file_paths = '/home/minhtranb/works/personal/tvs-refactor/resources/123/Top 6 Tools to Turn Code into Beautiful Diagrams.mp4'
+    result = process_srt(file_paths, "123", video_id="1", basename="test")
+    print(result)
