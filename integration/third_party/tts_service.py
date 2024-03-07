@@ -95,7 +95,7 @@ def convert_subtitles_to_audio(sub_path: str, convert_request: ConvertSrtRequest
                                   file_name=utils.get_file_basename(output_filename)['filename'])
     except Exception as e:
         print(f"Converting srt to audio failed: {str(e)}")
-        raise ConvertSsmlToAudioException(e)
+        return
 
 
 def __get_subtitle_info(sub):

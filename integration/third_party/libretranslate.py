@@ -12,13 +12,17 @@ class TranslateSrtToLanguageException(Exception):
 
 def translate_srt_file(srt_path, destination_language, output_path):
     print(f"Translating subtitles to {destination_language}")
-    subtitles = __read_text_from_srt_file(srt_path)
-    for subtitle in subtitles:
-        translated_text = __translate_text(subtitle['text'], destination_language)
-        subtitle['text'] = translated_text
-    __write_text_to_srt(subtitles, output_path)
-    print("Translation done")
-    return CommonFileResponse(file_path=output_path, file_name=utils.get_file_basename(output_path)['filename'])
+    try:
+        subtitles = __read_text_from_srt_file(srt_path)
+        for subtitle in subtitles:
+            translated_text = __translate_text(subtitle['text'], destination_language)
+            subtitle['text'] = translated_text
+        __write_text_to_srt(subtitles, output_path)
+        print("Translation done")
+        return CommonFileResponse(file_path=output_path, file_name=utils.get_file_basename(output_path)['filename'])
+    except Exception as e:
+        print(f"Translating to {destination_language} failed: {e}")
+        return
 
 
 def __parse_subtitle_block(block):
@@ -54,7 +58,7 @@ def __translate_text(text, destination_language):
         return response.json().get('translatedText', '')
     except (HTTPError, Timeout, ConnectionError) as e:
         print(f"HTTP request failed: {e}")
-        raise TranslateSrtToLanguageException(str(e))
+        return
 
 
 # Writing to SRT

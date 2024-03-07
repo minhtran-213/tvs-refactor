@@ -37,6 +37,7 @@ def __transcribe(file_path: str, task: Optional[str]):
         }
     except Exception as e:
         print(f"Transcribing audio failed: {e}")
+        return
 
 
 def __convert_to_srt(translate_result, filename, user_id: str, video_id: str):
@@ -44,34 +45,42 @@ def __convert_to_srt(translate_result, filename, user_id: str, video_id: str):
     root_path = utils.get_root_path()
     video_dir = os.path.join(root_path, "resources", user_id, video_id)
     srt_full_path = os.path.join(video_dir, f"{filename}_en.srt")
-    if not os.path.exists(video_dir):
-        os.makedirs(video_dir, exist_ok=True)
-    with open(srt_full_path, "w") as file:
-        sentence = []
-        start_time = None
-        counter = 1
-        for segment in translate_result:
-            for word in segment.words:
-                if not sentence:
-                    start_time = word.start
-                sentence.append(word.word)
-                end_time = word.end
-                if word.word.endswith((',', '.')):
-                    file.write(f"{counter}\n")
-                    file.write(f"{__format_timestamp(start_time)} --> {__format_timestamp(end_time)}\n")
-                    file.write(f"{' '.join(sentence)}\n\n")
-                    sentence = []
-                    start_time = None
-                    counter += 1
-    print("Converting to SRT finished")
-    return srt_full_path
+    try:
+        if not os.path.exists(video_dir):
+            os.makedirs(video_dir, exist_ok=True)
+        with open(srt_full_path, "w") as file:
+            sentence = []
+            start_time = None
+            counter = 1
+            for segment in translate_result:
+                for word in segment.words:
+                    if not sentence:
+                        start_time = word.start
+                    sentence.append(word.word)
+                    end_time = word.end
+                    if word.word.endswith((',', '.')):
+                        file.write(f"{counter}\n")
+                        file.write(f"{__format_timestamp(start_time)} --> {__format_timestamp(end_time)}\n")
+                        file.write(f"{' '.join(sentence)}\n\n")
+                        sentence = []
+                        start_time = None
+                        counter += 1
+        print("Converting to SRT finished")
+        return srt_full_path
+    except Exception as e:
+        print(f"Convert to srt failed: {e}")
+        return
 
 
 def __format_timestamp(seconds):
     """Convert seconds to timestamp format for SRT."""
-    hours, remainder = divmod(seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02},{int((seconds - int(seconds)) * 1000):03}"
+    try:
+        hours, remainder = divmod(seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02},{int((seconds - int(seconds)) * 1000):03}"
+    except Exception as e:
+        print(f"Formatting timestamp failed: {e}")
+        return
 
 
 if __name__ == "__main__":

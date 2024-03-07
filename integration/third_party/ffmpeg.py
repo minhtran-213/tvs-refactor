@@ -58,10 +58,12 @@ def combine_video(video_path: str, subtitle_path: str, audio_path: str, locale_c
         ])
 
     combine_request.append(output_path)
-
-    subprocess.run(combine_request, check=True)
-    print("Combining video done")
-    return CommonFileResponse(file_path=output_path, file_name=utils.get_file_basename(output_path)['filename'])
+    try:
+        subprocess.run(combine_request, check=True)
+        print("Combining video done")
+        return CommonFileResponse(file_path=output_path, file_name=utils.get_file_basename(output_path)['filename'])
+    except Exception as e:
+        print(f"Combining failed: {e}")
 
 
 if __name__ == "__main__":
